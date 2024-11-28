@@ -24,7 +24,7 @@ resource "aws_lambda_function" "minecraft_server_controller" {
 
   environment {
     variables = {
-      "INSTANCE_ID" = "i-04876c4b53e15f93d"
+      "INSTANCE_ID" = aws_instance.minecraft.id
     }
   }
 
