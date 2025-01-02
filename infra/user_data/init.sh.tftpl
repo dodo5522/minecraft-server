@@ -1,0 +1,50 @@
+#!/bin/bash
+apt update
+apt install -y unzip awscli
+ufw allow 33283
+ufw allow 19132
+ufw allow 19133
+
+mkdir -p /var/tmp/minecraft
+cat <<EOF1> /var/tmp/minecraft/env
+LD_LIBRARY_PATH=/var/tmp/minecraft
+EOF1
+
+###
+# https://www.shells.com/l/en-US/tutorial/0-A-Guide-to-Installing-a-Minecraft-Server-on-Linux-Ubuntu
+###
+mkdir -p /etc/systemd/system
+cat <<EOF2> /etc/systemd/system/minecraft.service
+[Unit]
+Description=Minecraft Server
+After=minecraft-user-monitor.service
+
+[Service]
+Type=simple
+EnvironmentFile=/var/tmp/minecraft/env
+WorkingDirectory=/var/tmp/minecraft
+ExecStart=/var/tmp/minecraft/bedrock_server
+ExecStop=/bin/kill -TERM ${MAINPID}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF2
+
+git clone https://gist.github.com/57fd09ada3cb8bb09c11f992dafeca91.git /var/tmp/minecraft_user_monitor
+
+cat <<EOF3> /etc/systemd/system/minecraft-user-monitor.service
+[Unit]
+Description=Minecraft User Monitor
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/tmp/minecraft_user_monitor
+ExecStart=/var/tmp/minecraft_user_monitor/run.sh
+ExecStop=/bin/kill -TERM ${MAINPID}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF3
