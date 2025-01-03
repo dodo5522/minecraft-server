@@ -1,3 +1,9 @@
+locals {
+  url_repo_minecraft_user_monitor = "https://gist.github.com/57fd09ada3cb8bb09c11f992dafeca91.git"
+  path_minecraft_server           = "/var/tmp/minecraft"
+  path_minecraft_user_monitor     = "/var/tmp/minecraft_user_monitor"
+}
+
 data "aws_ami" "ubuntu_22_04" {
   most_recent = true
   owners      = ["amazon"]
@@ -16,10 +22,38 @@ data "aws_ami" "ubuntu_22_04" {
   }
 }
 
-resource "aws_instance" "minecraft" {
-  ami = data.aws_ami.ubuntu_22_04.id
+resource "aws_key_pair" "minecraft" {
+  key_name   = "minecraft"
+  public_key = file("keys/aws-minecraft.pub")
+}
 
+resource "aws_eip" "minecraft" {
+  instance = aws_instance.minecraft.id
+  domain   = "vpc"
+}
+
+resource "aws_instance" "minecraft" {
+  ami           = data.aws_ami.ubuntu_22_04.id
   instance_type = "t3a.small"
+
+  availability_zone                    = "ap-northeast-1a"
+  disable_api_stop                     = false
+  disable_api_termination              = false
+  iam_instance_profile                 = "aws-minecraft-instance-role"
+  instance_initiated_shutdown_behavior = "stop"
+  key_name                             = aws_key_pair.minecraft.key_name
+
+  user_data = templatefile("user_data/init.sh.tftpl", {
+    url_repo_minecraft_user_monitor : local.url_repo_minecraft_user_monitor,
+    path_minecraft_server : local.path_minecraft_server,
+    path_minecraft_user_monitor : local.path_minecraft_user_monitor,
+    minecraft_service : templatefile("user_data/minecraft.service.tftpl", {
+      path_minecraft_server : local.path_minecraft_server,
+    }),
+    minecraft_user_monitor_service : templatefile("user_data/minecraft-user-monitor.service.tftpl", {
+      path_minecraft_user_monitor : local.path_minecraft_user_monitor,
+    }),
+  })
 
   tags = {
     Name = "Minecraft server"

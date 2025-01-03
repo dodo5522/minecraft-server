@@ -5,7 +5,7 @@ data "archive_file" "minecraft_server_controller" {
 }
 
 resource "aws_lambda_function" "minecraft_server_controller" {
-  description      = "Controll minecraft server"
+  description      = "Control minecraft server"
   function_name    = "minecraft_server_controller"
   role             = "arn:aws:iam::925849551550:role/aws-minecraft-controller-role"
   handler          = "main.handler"

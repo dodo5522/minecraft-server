@@ -1,0 +1,13 @@
+[Unit]
+Description=Minecraft User Monitor
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=${path_minecraft_user_monitor}
+ExecStart=${path_minecraft_user_monitor}/run.sh
+ExecStop=/bin/kill -TERM $${MAINPID}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

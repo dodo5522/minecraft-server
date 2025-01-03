@@ -1,0 +1,16 @@
+# https://www.shells.com/l/en-US/tutorial/0-A-Guide-to-Installing-a-Minecraft-Server-on-Linux-Ubuntu
+
+[Unit]
+Description=Minecraft Server
+After=minecraft-user-monitor.service
+
+[Service]
+Type=simple
+EnvironmentFile=${path_minecraft_server}/env
+WorkingDirectory=${path_minecraft_server}
+ExecStart=${path_minecraft_server}/bedrock_server
+ExecStop=/bin/kill -TERM $${MAINPID}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
