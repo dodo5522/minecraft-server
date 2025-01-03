@@ -22,9 +22,13 @@ data "aws_ami" "ubuntu_22_04" {
   }
 }
 
+###################
+# resources
+###################
+
 resource "aws_key_pair" "minecraft" {
   key_name   = "minecraft"
-  public_key = file("keys/aws-minecraft.pub")
+  public_key = file("keys/minecraft.pub")
 }
 
 resource "aws_eip" "minecraft" {
@@ -34,14 +38,19 @@ resource "aws_eip" "minecraft" {
 
 resource "aws_instance" "minecraft" {
   ami           = data.aws_ami.ubuntu_22_04.id
-  instance_type = "t3a.small"
 
-  availability_zone                    = "ap-northeast-1a"
+  availability_zone                    = var.availability_zone
   disable_api_stop                     = false
   disable_api_termination              = false
-  iam_instance_profile                 = "aws-minecraft-instance-role"
+  iam_instance_profile                 = "aws-minecraft-instance-role"  # TODO
   instance_initiated_shutdown_behavior = "stop"
+  instance_type                        = "t3a.small"
   key_name                             = aws_key_pair.minecraft.key_name
+  subnet_id                            = aws_subnet.public.id
+
+  vpc_security_group_ids = [
+    aws_security_group.allow_ports_for_minecraft_server.id,
+  ]
 
   user_data = templatefile("user_data/init.sh.tftpl", {
     url_repo_minecraft_user_monitor : local.url_repo_minecraft_user_monitor,
@@ -128,4 +137,18 @@ resource "aws_vpc_security_group_egress_rule" "allow_ports_for_minecraft_server_
   security_group_id = aws_security_group.allow_ports_for_minecraft_server.id
   ip_protocol       = "-1"
   cidr_ipv6         = "::/0"
+}
+
+###################
+# outputs
+###################
+
+output "instance_id" {
+  description = "Minecraft server instance ID"
+  value       = aws_instance.minecraft.id
+}
+
+output "public_ip" {
+  description = "Public IP v4 address"
+  value       = aws_eip.minecraft.public_ip
 }
