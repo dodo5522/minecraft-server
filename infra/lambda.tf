@@ -39,6 +39,7 @@ resource "aws_lambda_function" "minecraft_server_controller" {
   vpc_config {
     security_group_ids = [
       aws_security_group.allow_for_minecraft_controller.id,
+      aws_security_group.allow_for_minecraft_server_vpce.id,
     ]
     subnet_ids = [
       "subnet-00978068bc36a01e8",
